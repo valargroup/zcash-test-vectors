@@ -195,18 +195,10 @@ IRONWOOD_PERSONALIZATIONS = {
     'auth': b'ZTxAuthIrnwdH_v6',
 }
 
-BUNDLE_FORMAT_PRE_NU6_3 = 'pre_nu6_3'
-BUNDLE_FORMAT_IRONWOOD_V6 = 'ironwood_v6'
-
-
-def encode_orchard_flags(flags, bundle_format):
-    if bundle_format == BUNDLE_FORMAT_PRE_NU6_3:
-        assert flags & ~0b011 == 0
-    elif bundle_format == BUNDLE_FORMAT_IRONWOOD_V6:
-        assert flags & ~0b111 == 0
-    else:
-        raise ValueError('Unknown Orchard bundle format: %s' % bundle_format)
-    return flags
+# Bit 2 (enableCrossAddress) is defined only for Ironwood bundles. It stays
+# reserved in flagsOrchard for both v5 and v6 transactions (ZIP 229).
+ORCHARD_FLAGS_MASK = 0b011
+IRONWOOD_FLAGS_MASK = 0b111
 
 
 def orchard_bundle_digest(
@@ -215,7 +207,7 @@ def orchard_bundle_digest(
         value_balance,
         anchor,
         personalizations,
-        bundle_format,
+        flags_mask,
         include_anchor):
     digest = blake2b(digest_size=32, person=personalizations['bundle'])
 
@@ -223,7 +215,8 @@ def orchard_bundle_digest(
         digest.update(orchard_actions_compact_digest(actions, personalizations))
         digest.update(orchard_actions_memos_digest(actions, personalizations))
         digest.update(orchard_actions_noncompact_digest(actions, personalizations))
-        digest.update(struct.pack('<B', encode_orchard_flags(flags, bundle_format)))
+        assert flags & ~flags_mask == 0
+        digest.update(struct.pack('<B', flags))
         digest.update(struct.pack('<q', value_balance))
         if include_anchor:
             digest.update(bytes(anchor))
@@ -257,7 +250,7 @@ def orchard_digest(tx):
         tx.valueBalanceOrchard,
         getattr(tx, 'anchorOrchard', b''),
         ORCHARD_PERSONALIZATIONS,
-        BUNDLE_FORMAT_PRE_NU6_3,
+        ORCHARD_FLAGS_MASK,
         True,
     )
 
@@ -278,7 +271,7 @@ def orchard_v6_digest(tx):
         tx.valueBalanceOrchard,
         getattr(tx, 'anchorOrchard', b''),
         ORCHARD_V6_PERSONALIZATIONS,
-        BUNDLE_FORMAT_IRONWOOD_V6,
+        ORCHARD_FLAGS_MASK,
         False,
     )
 
@@ -299,7 +292,7 @@ def ironwood_digest(tx):
         tx.valueBalanceIronwood,
         getattr(tx, 'anchorIronwood', b''),
         IRONWOOD_PERSONALIZATIONS,
-        BUNDLE_FORMAT_IRONWOOD_V6,
+        IRONWOOD_FLAGS_MASK,
         False,
     )
 
