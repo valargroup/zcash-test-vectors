@@ -26,6 +26,9 @@ def main():
     rand = randbytes(rng)
 
     consensusBranchId = 0xFFFF_FFFF # ZFUTURE
+    # ZIP 233 is no longer part of the v6 format, so these vectors keep the
+    # version group ID reserved for experimental formats.
+    versionGroupId = 0xFFFF_FFFF # ZFUTURE
 
     test_vectors = []
     for _ in range(10):
@@ -46,6 +49,7 @@ def main():
             orchard_value_balance=rand.u64() % (MAX_MONEY + 1),
             ironwood_value_balance=rand.u64() % (MAX_MONEY + 1),
         )
+        tx.nVersionGroupId = versionGroupId
 
         # Generate amounts and scriptCodes for each non-dummy transparent input.
         t_inputs = []

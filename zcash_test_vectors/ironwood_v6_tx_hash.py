@@ -30,11 +30,11 @@ from .zip_0143 import (
 )
 
 
-IRONWOOD_EXPERIMENTAL_BRANCH_ID = 0xFFFFFFFF
+NU6_3_BRANCH_ID = 0x37A5165B
 
 
 def new_tx(rand, **kwargs):
-    return IronwoodTransactionV6(rand, IRONWOOD_EXPERIMENTAL_BRANCH_ID, **kwargs)
+    return IronwoodTransactionV6(rand, NU6_3_BRANCH_ID, **kwargs)
 
 
 def mutate_sapling_anchor(tx, rand):

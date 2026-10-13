@@ -27,8 +27,7 @@ NU5_VERSION_GROUP_ID = 0x26A7270A
 NU5_TX_VERSION = 5
 
 V6_TX_VERSION = 6
-# TODO: change this
-V6_VERSION_GROUP_ID = 0xFFFFFFFF
+V6_VERSION_GROUP_ID = 0xD884B698
 ORCHARD_PROOF_BASE_SIZE = 2720
 ORCHARD_PROOF_PER_ACTION_SIZE = 2272
 
@@ -607,26 +606,6 @@ class TransactionV5(object):
 
         return ret
 
-class TransactionV6(TransactionV5):
-    def init_header(self, consensus_branch_id, rand):
-        # Common Transaction Fields
-        self.nVersionGroupId = V6_VERSION_GROUP_ID
-        self.nConsensusBranchId = consensus_branch_id
-        self.nLockTime = rand.u32()
-        self.nExpiryHeight = rand.u32() % TX_EXPIRY_HEIGHT_THRESHOLD
-        self.zip233Amount = 0
-
-    def version_bytes(self):
-        return V6_TX_VERSION | (1 << 31)
-
-    def header_bytes(self):
-        ret = b''
-
-        ret += super().header_bytes()
-        ret += struct.pack('<Q', self.zip233Amount)
-
-        return ret
-
 class IronwoodTransactionV6(TransactionV5):
     def __init__(
             self,
@@ -784,7 +763,7 @@ class Transaction(object):
             self.inner = TransactionV5(rand, consensus_branch_id)
         elif version == V6_TX_VERSION:
             assert consensus_branch_id is not None
-            self.inner = TransactionV6(rand, consensus_branch_id)
+            self.inner = IronwoodTransactionV6(rand, consensus_branch_id)
         else:
             self.inner = LegacyTransaction(rand, version)
 
